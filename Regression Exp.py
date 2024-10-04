@@ -11,6 +11,8 @@ from scipy.signal import savgol_filter
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import PolynomialFeatures
 import sys
+from tkinter import * 
+from tkinter import messagebox 
 
 np.set_printoptions(threshold=sys.maxsize)
 def smooth(df, col):
@@ -53,24 +55,24 @@ def step_back(df):
        'AP3_2_Data_of_Actual_Position_Z_mm',
        'AP3_2_Settings_M358_Montage_Position_mm',
        'AP3_2_Settings_M359_Montage_Position_mm',
-       'AP3_2_Actual_Part_to_Service', '01', '02', '03', '04', '05', '06','07', '08']
+       'AP3_2_Actual_Part_to_Service','Palette']
     cols_to_drop=[
-       'AP3_2_Actual_Part_to_Service_sb', '01_sb', '02_sb', '03_sb', '04_sb', '05_sb', '06_sb','07_sb', '08_sb']
-    cols_poly=['AP3_2_Actual_Part_to_Service', '01', '02', '03', '04', '05', '06','07', '08']
+       'AP3_2_Actual_Part_to_Service_sb']
+    #cols_poly=['AP3_2_Actual_Part_to_Service', '01', '02', '03', '04', '05', '06','07', '08']
     
 
     #print(df[cols])
     df2=df2.drop(columns=cols_to_drop)
     df=df[cols]
-    print(df2.columns)
-    print(df.columns)
+    #print(df2.columns)
+    #print(df.columns)
     df_out=pd.concat([df2,df], axis=1)
     df_out=df_out.drop(len(df_out)-1)
-    df_tmp=df_out[cols_poly]
-    print(df_out.columns)
-    df_out=df_out.drop(columns=cols_poly)
+    #df_tmp=df_out[cols_poly]
+    #print(df_out.columns)
+    #df_out=df_out.drop(columns=cols_poly)
     #df_out = poly.fit_transform(df_out)
-    print(df_out)
+    #print(df_out)
     df_out.to_csv('tmp.csv')
     return(df_out)
     
@@ -81,31 +83,64 @@ def step_back(df):
 #       client = mlflow.MlflowClient(tracking_uri="http://127.0.0.1:5000")
 mlflow.set_tracking_uri("http://127.0.0.1:5000")
 #os.remove('C:\\SVN\\Python projects\\Regression v1.0\\files\\')
-workfiles_path='C:\\SVN\\Python projects\\Regression v1.0\\files\\'
+workfiles_path='./files/'
+import_path='./files_csv/'
 #if not os.path.exists(workfiles_path):
 #          os.makedirs(workfiles_path) 
 learn_db_name='100k_1.csv' #df learn 4000 #100k_1
 test_db_name='test5.csv'
-df=pd.read_csv('C:/Users/zaizzhaim/OneDrive - Mubea/Documents/02_101 Miling Machine Learning/Data csv raw/'+learn_db_name)
-df_test=pd.read_csv('C:/Users/zaizzhaim/OneDrive - Mubea/Documents/02_101 Miling Machine Learning/Data csv raw/'+test_db_name)
+df=pd.read_csv(import_path+learn_db_name)
+df_test_import=pd.read_csv('C:/Users/zaizzhaim/OneDrive - Mubea/Documents/02_101 Miling Machine Learning/Data csv raw/'+test_db_name)
 
 #end_import=time.time()
-
+outputs=['RESULT_InclinationBeltDirection__deg_',
+       'RESULT_Inclination90ToBeltDirection__deg_']
 #
 df=df.replace('',np.nan)
-df_test=df_test.replace('',np.nan)
+df_test_import=df_test_import.replace('',np.nan)
 df=df.replace('#VALUE!',np.nan)
-df_test=df_test.replace('#VALUE!',np.nan)
+df_test_import=df_test_import.replace('#VALUE!',np.nan)
 df=df.dropna()
-df_test=df_test.dropna()
+df_test_import=df_test_import.dropna()
 df=df.reset_index(drop=True)
-df_test=df_test.reset_index(drop=True)
+df_test_import=df_test_import.reset_index(drop=True)
+
 
 
 df=df.loc[df.RESULT_InclinationBeltDirection__deg_>0.1]
 df=df.loc[df.RESULT_InclinationBeltDirection__deg_<0.9]
 df=df.loc[df.RESULT_Inclination90ToBeltDirection__deg_<0]
 df=df.loc[df.RESULT_Inclination90ToBeltDirection__deg_>-0.7]
+
+
+df = df.drop(columns=df.select_dtypes(include=['object']).columns)
+print(pd.unique(df.dtypes))
+columns=df.columns
+df=step_back(df)
+#df_test_import=df_test_import[df.columns]
+df_cor=df.corr()
+df1=df[:54000]
+df2=df[54001:108000]
+
+
+poly = PolynomialFeatures(degree=2, include_bias=False)
+
+df1_poly=poly.fit_transform(df1)
+df2_poly=poly.fit_transform(df2)
+
+
+feature_names_train = poly.get_feature_names_out(df1.columns)
+feature_names_2train = poly.get_feature_names_out(df2.columns)
+
+#df_train.to_csv('dfx0.csv')
+
+# Create a new DataFrame with the polynomial features
+df1 = pd.DataFrame(df1_poly, columns=feature_names_train)
+df2 = pd.DataFrame(df2_poly, columns=feature_names_2train)
+
+
+df_cor.to_csv("cor.csv")
+
 #df_subs=df.diff()
 ##df_subs=df_subs.dropna()
 #d#f_subs=df_subs.reset_index(drop=True)
@@ -113,44 +148,40 @@ df=df.loc[df.RESULT_Inclination90ToBeltDirection__deg_>-0.7]
 
 #df=df.sample(frac=1)
 #df_test=df_test.sample(frac=1)
-df_x=df[df.columns[-6:-1]]
-#print(df_x.columns)
-#df_x=pd.concat([df_x,df[df.columns[-5]]],axis=1)
-df_x=pd.concat([df_x,df[df.columns[-12:-7]]],axis=1)
-df_x=pd.concat([df_x,df[df.columns[-16:-14]]],axis=1)
-df_x=pd.concat([df_x,df[df.columns[-17]]],axis=1)
-df_x=pd.concat([df_x,df[df.columns[-20]]],axis=1)
-df_x=pd.concat([df_x,df[df.columns[-26:-22]]],axis=1)
-df_x=pd.concat([df_x,df[df.columns[-69]]],axis=1)
-df_x=pd.concat([df_x,df[df.columns[-67]]],axis=1)
-df_x=pd.concat([df_x,df[df.columns[37:40]]],axis=1)
-df_x=pd.concat([df_x,df[df.columns[66:68]]],axis=1)
-#df_x=pd.concat([df_x,df[df.columns[52:68]]],axis=1)
-##df_x=pd.concat([df_x,df[df.columns[127:138]]],axis=1)
-#df_x=pd.concat([df_x,df[df.columns[181:192]]],axis=1)
-#df_x=pd.concat([df_x,df[df.columns[202:269]]],axis=1)
-i=3
-#for i in range(3,22,2):
-   #df_x=pd.concat([df_x,df[df.columns[i]]],axis=1) 
-droplst=['PARAM_UsePolygonEvaluationB', 'PARAM_UsePolygonEvaluationA','PARAM_OneCycle']  
-df_x
-
-df_x=df_x
-df_test_temp=df_test[df_x.columns]
-df_x=pd.concat([df_x,df[df.columns[68]]],axis=1)
-df_x=pd.concat([df_x,df[df.columns[2]]],axis=1)
-df_test_temp=pd.concat([df_test_temp,df_test[df.columns[2]]],axis=1)
-df_test_temp=pd.concat([df_test_temp,df_test[df.columns[68]]],axis=1)
+df_train=df[df.columns[-6:-1]]
+#print(df_train.columns)
+df_train=pd.concat([df_train,df[df.columns[-5]]],axis=1)
+df_train=pd.concat([df_train,df[df.columns[-12:-7]]],axis=1)
+df_train=pd.concat([df_train,df[df.columns[-16:-14]]],axis=1)
+df_train=pd.concat([df_train,df[df.columns[-17]]],axis=1)
+df_train=pd.concat([df_train,df[df.columns[-20]]],axis=1)
+df_train=pd.concat([df_train,df[df.columns[-26:-22]]],axis=1)
+df_train=pd.concat([df_train,df[df.columns[-69]]],axis=1)
+df_train=pd.concat([df_train,df[df.columns[-67]]],axis=1)
+df_train=pd.concat([df_train,df[df.columns[37:40]]],axis=1)
+df_train=pd.concat([df_train,df[df.columns[66:68]]],axis=1)
+df_train=pd.concat([df_train,df[df.columns[68]]],axis=1)
+df_train=pd.concat([df_train,df[df.columns[2]]],axis=1)
+#df_train=pd.concat([df_train,df[df.columns[52:68]]],axis=1)
+##df_train=pd.concat([df_train,df[df.columns[127:138]]],axis=1)
+#df_train=pd.concat([df_train,df[df.columns[181:192]]],axis=1)
+#df_train=pd.concat([df_train,df[df.columns[202:269]]],axis=1)
 
 
 
-#df_x=pd.concat([df_x,df[df.columns[2]]],axis=1)
-#df_x=pd.concat([df_x,df[df.columns[3]]],axis=1)
-#df_x=pd.concat([df_x,df[df.columns[5]]],axis=1)
 
-for item in df_test_temp.columns:
-    print(item)
-print(df_test_temp.columns)
+#df_test=pd.concat([df_test,df_test[df.columns[2]]],axis=1)
+#df_test=pd.concat([df_test,df_test[df.columns[68]]],axis=1)
+
+df_train=df_train
+df_test=df_test_import[df_train.columns]
+
+
+#df_train=pd.concat([df_train,df[df.columns[2]]],axis=1)
+#df_train=pd.concat([df_train,df[df.columns[3]]],axis=1)
+#df_train=pd.concat([df_train,df[df.columns[5]]],axis=1)
+
+
 
 #f_x=df[df.columns[66:68]]
 
@@ -158,24 +189,24 @@ print(df_test_temp.columns)
 #df_y=df_y.diff()
 #df_y.to_csv(workfiles_path + 'dfy.csv')
 
+#print(np.shape(df_train))
+df_train["Palette"] = df_train["Palette"].astype(int)   
+palette=df_train.pop('Palette')
+df_train_cat=pd.DataFrame()
 
-df_x["Palette"] = df_x["Palette"].astype(int)   
-palette=df_x.pop('Palette')
-df_x_cat=pd.DataFrame()
-
-df_x_cat['01']=(palette==1)*1.0
-df_x_cat['02']=(palette==2)*1.0
-df_x_cat['03']=(palette==3)*1.0
-df_x_cat['04']=(palette==4)*1.0
-df_x_cat['05']=(palette==5)*1.0
-df_x_cat['06']=(palette==6)*1.0
-df_x_cat['07']=(palette==7)*1.0
-df_x_cat['08']=(palette==8)*1.0
+df_train_cat['01']=(palette==1)*1.0
+df_train_cat['02']=(palette==2)*1.0
+df_train_cat['03']=(palette==3)*1.0
+df_train_cat['04']=(palette==4)*1.0
+df_train_cat['05']=(palette==5)*1.0
+df_train_cat['06']=(palette==6)*1.0
+df_train_cat['07']=(palette==7)*1.0
+df_train_cat['08']=(palette==8)*1.0
 #
-#print(df_x['01'])
+#print(df_train['01'])
 df_test_cat=pd.DataFrame()
-df_test_temp["Palette"] = df_test_temp["Palette"].astype(int)  
-palette_1=df_test_temp.pop('Palette')
+df_test["Palette"] = df_test["Palette"].astype(int)  
+palette_1=df_test.pop('Palette')
 df_test_cat['01']=(palette_1==1.0)*1
 df_test_cat['02']=(palette_1==2.0)*1
 df_test_cat['03']=(palette_1==3.0)*1
@@ -188,47 +219,117 @@ df_test_cat['08']=(palette_1==8.0)*1
 
 
 #df_test.to_csv(workfiles_path+'\\'+'dfx.csv')
-#df=func.dyn_df(df,df_x)
-
-poly = PolynomialFeatures()
-df_x=poly.fit_transform(df_x)
-print(df_x)
-df_x.to_csv('dfx0.csv')
-df_x_cat.to_csv('dfxcat.csv')
+#df=func.dyn_df(df,df_train)
+df_train=df_train.reset_index(drop=True)
+df_train_cat=df_train_cat.reset_index(drop=True)
+df_test=df_test.reset_index(drop=True)
+df_test_cat=df_test_cat.reset_index(drop=True)
 
 
 
 
 
-df_train=pd.concat([df_x,df_x_cat],axis=1)    
-df_test=pd.concat([df_test_temp,df_test_cat],axis=1)
+#print(df_train)
+#print(df_train_cat)
+#print(df_test)
+#print(df_test_cat)
 
 
-
-#df_x=df_x.replace('',np.nan)
-#df_test_temp=df_test_temp.replace('',np.nan)
-
-#df_train=df_train.dropna()
-#df_test_temp=df_test_temp.dropna()
-df_train=df_train.drop(0)
-
-df_test=df_test.drop(0)
+df_train.to_csv('dfx0.csv')
+df_train_cat.to_csv('dfxcat.csv')
+#print(np.shape(df_train_cat))
 df_train=step_back(df_train)
 df_test=step_back(df_test)
-print(df_train)
+print(df_train.columns)
+print(df_test.columns)
+#print(df_te)
+
+df_y_train=df_train[outputs]
+df_y_test=df_test[outputs]
+
+df_train_temp=df_train.drop(columns=outputs)
+df_test_temp=df_test.drop(columns=outputs)
+print(df_train_temp.columns)
+print(df_test.columns)
+
+
+#print(df_train.columns)
+poly = PolynomialFeatures(degree=2, include_bias=False)
+
+df_train_poly=poly.fit_transform(df_train_temp)
+df_test_poly=poly.fit_transform(df_test_temp)
+feature_names_train = poly.get_feature_names_out(df_train_temp.columns)
+feature_names_test = poly.get_feature_names_out(df_test_temp.columns)
+#df_train.to_csv('dfx0.csv')
+
+# Create a new DataFrame with the polynomial features
+df_train = pd.DataFrame(df_train_poly, columns=feature_names_train)
+df_test = pd.DataFrame(df_test_poly, columns=feature_names_test)
+
+#df_train.to_csv('dfx_poly.csv')
+
+
+
+
+
+
+
+df_train=pd.concat([df_train,df_train_cat],axis=1)    
+df_test=pd.concat([df_test,df_test_cat],axis=1)
+
+df_train=pd.concat([df_train,df_y_train],axis=1)    
+df_test=pd.concat([df_test,df_y_test],axis=1)
+
+#print(len(df_train.columns))
+#print(len(df_test.columns))
+
+
+
+#df_train=df_train.replace('',np.nan)
+#df_test=df_test.replace('',np.nan)
+
+#df_train=df_train.dropna()
+#df_test=df_test.dropna()
+df_train=df_train.drop(0)
+df_test=df_test.drop(0)
+df_train=df_train.drop(len(df_train))
+df_test=df_test.drop(len(df_test))
+from sklearn.linear_model import Lasso
+inputs=df_train.columns
+inputs=inputs.drop(outputs)
+lasso = Lasso(alpha=0.01)
+print("lasso starts")
+temp_tf=np.empty((len(outputs),len(inputs)))
+n=0
+for col in outputs:
+    lasso.fit(df_train[inputs], df_train[col])
+    print(lasso.coef_)
+    temp_tf[n,:]= lasso.coef_ != 0
+    n+=1
+
+cond= (temp_tf[0, :] == True) | (temp_tf[1, :] == True)
+print(cond)
+
+filtered_array = inputs[cond]
+filtered_array=np.concatenate((filtered_array,outputs),axis=0)
+filtered_array=np.concatenate((filtered_array,np.array(['01','02','03','04','05','06','07','08'])),axis=0)
+
+#print(array)
+#print(filtered_array)
+#df_train=df_train[filtered_array]
+#df_test=df_test[filtered_array]
+#df_train=step_back(df_train)
+#df_test=step_back(df_test)
+#print(df_train) 
 #from sklearn.preprocessing import FunctionTransformer
 
-df_x = poly.fit_transform(df_train)
-df_test_temp=poly.fit_transform(df_test)
+#df_train = poly.fit_transform(df_train)
+#df_test=poly.fit_transform(df_test)
 #log_transformer = FunctionTransformer(np.log)
-print(df_x)
-exit()
+#print(df_train)
 
-# Apply log transformation
-#df_x= log_transformer.transform(df_x)
-#df_test_temp= log_transformer.transform(df_test_temp)
-df_train=pd.DataFrame(df_x)
-df_test=pd.DataFrame(df_test_temp)
+
+
 
 arr=['AP3_2_Data_of_Actual_Position_Y_deg',
      'AP3_2_Data_of_Actual_Position_X_deg',
@@ -246,16 +347,32 @@ arr=['AP3_2_Data_of_Actual_Position_Y_deg',
       # 'RESULT_XWheelUpAngle__deg_']
 #for col in arr:
 #    df_train=smooth(df_train,col)
-df_train.to_csv(workfiles_path + 'df_train.csv')
-df_test.to_csv(workfiles_path + 'df_test.csv')
+df_train_comp=pd.read_csv(workfiles_path + 'df_train.csv')
+df_test_comp=pd.read_csv(workfiles_path + 'df_test.csv')
+if df_train_comp.equals(df_train):
+    print("Train equal")
+else:
+    df_train.to_csv(workfiles_path + 'df_train.csv')
+if df_test_comp.equals(df_test):
+    print("Train equal")
+else:
+    df_test.to_csv(workfiles_path + 'df_test.csv')
 
 
 
-#df_train=pd.concat([df_x,df_y],axis=1)
+print(df_train.columns)
+if np.array_equal(df_train.columns,df_test.columns):
+    print('Co;umns equal')
+else:
+    print('columns NOT equal')  
+    exit()
+
+
+#df_train=pd.concat([df_train,df_y],axis=1)
 #print(df_train["AP3_2_Data_of_Actual_Position_Y_deg"])
 #df_test=df_test[df_train.columns]
 
-print(df_train.columns)
+#print(df_train.columns)
 #loaded_model = load_model('OUT1')
 #print(loaded_model)
 #predictions = predict_model(loaded_model, data=df_test)
@@ -273,8 +390,7 @@ print(df_train.columns)
 df_pred=pd.DataFrame()
 result_path='C:\\Users\\zaizzhaim\\OneDrive - Mubea\\Documents\\02_101 Miling Machine Learning\\Results\\Experiments'
 path='C:\\SVN\\'
-outputs=['RESULT_InclinationBeltDirection__deg_',
-       'RESULT_Inclination90ToBeltDirection__deg_']
+
        #'RESULT_MaximalForceAngle__deg_',
        #'RESULT_InclinationInMaximalForceDirection__deg_',
        #'RESULT_Perpendicularity__mm_']
@@ -314,20 +430,20 @@ for output in outputs:
        log_experiment = False, 
        experiment_name = output,
        index=False,
-       #use_gpu=True
+       use_gpu=True,
        log_data=True,
        normalize=normalize, 
        #remove_multicollinearity = remove_multicollinearity,
-       categorical_features=['01','02','03','04','05','06','07','08'],
-       pca=pca,
+       categorical_features=['01','02','03','04','05','06','07','08'])  
+       #pca=pca,
        #fold_strategy='timeseries',
-      # data_split_shuffle=False,
-      # fold_shuffle=False,
-       feature_selection=True,
+       #data_split_shuffle=False,
+       #fold_shuffle=False)
+       #feature_selection=True)
        #feature_selection_threshold=0.8,
        #polynomial_features=True,
        #polynomial_degree=2,
-       remove_multicollinearity=True)
+       #remove_multicollinearity=True)
        #multicollinearity_threshold=0.9,
        #transformation=True)
        #transformation_method='yeo-johnson')
