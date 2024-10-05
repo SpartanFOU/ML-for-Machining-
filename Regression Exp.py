@@ -5,14 +5,15 @@ import mlflow
 from pycaret.regression import *
 import matplotlib.pyplot as plt
 #rom pycaret.time_series import *
-from ydata_profiling import ProfileReport
+#from ydata_profiling import ProfileReport
 import os
 from scipy.signal import savgol_filter
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import PolynomialFeatures
 import sys
 from tkinter import * 
-from tkinter import messagebox 
+from tkinter import messagebox
+import shutil 
 
 np.set_printoptions(threshold=sys.maxsize)
 def smooth(df, col):
@@ -76,7 +77,15 @@ def step_back(df):
     df_out.to_csv('tmp.csv')
     return(df_out)
     
-
+def devide_df(df,n):
+    size=int(round(len(df)/n,0))
+    dfs=[]
+    indx=0
+    for i in range(n):
+        df_small=df.iloc[indx:indx+round(size,0)]
+        dfs.append(df_small)
+        indx=indx+size+1
+    return(dfs)
     
 
 
@@ -85,12 +94,15 @@ mlflow.set_tracking_uri("http://127.0.0.1:5000")
 #os.remove('C:\\SVN\\Python projects\\Regression v1.0\\files\\')
 workfiles_path='./files/'
 import_path='./files_csv/'
-#if not os.path.exists(workfiles_path):
-#          os.makedirs(workfiles_path) 
+if not os.path.exists(workfiles_path):
+          os.makedirs(workfiles_path) 
+if not os.path.exists(import_path):
+          shutil.copytree('C:/SVN/Python projects/files_csv',import_path) 
+
 learn_db_name='100k_1.csv' #df learn 4000 #100k_1
 test_db_name='test5.csv'
 df=pd.read_csv(import_path+learn_db_name)
-df_test_import=pd.read_csv('C:/Users/zaizzhaim/OneDrive - Mubea/Documents/02_101 Miling Machine Learning/Data csv raw/'+test_db_name)
+df_test_import=pd.read_csv(import_path+test_db_name)
 
 #end_import=time.time()
 outputs=['RESULT_InclinationBeltDirection__deg_',
@@ -119,6 +131,7 @@ columns=df.columns
 df=step_back(df)
 #df_test_import=df_test_import[df.columns]
 df_cor=df.corr()
+dfs=devide_df(df,4)
 df1=df[:54000]
 df2=df[54001:108000]
 
