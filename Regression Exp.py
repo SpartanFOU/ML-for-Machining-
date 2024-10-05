@@ -1,55 +1,19 @@
 import pandas as pd
-import sklearn
 import numpy as np
 import mlflow
 from pycaret.regression import *
 import matplotlib.pyplot as plt
-#rom pycaret.time_series import *
-#from ydata_profiling import ProfileReport
 import os
 from scipy.signal import savgol_filter
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import PolynomialFeatures
-import sys
-from tkinter import * 
-from tkinter import messagebox
 import shutil 
 
 
-import subprocess
-
-def generate_requirements():
-    # Run 'pip freeze' command and capture the output
-    result = subprocess.run(['pip', 'freeze'], stdout=subprocess.PIPE, text=True)
-    
-    # Store the result (list of installed packages and versions)
-    requirements = result.stdout
-    
-    # Write the output to requirements.txt
-    with open('requirements.txt', 'w') as f:
-        f.write(requirements)
-
-    print("requirements.txt has been generated.")
-
-# Call the function to generate the requirements.txt file
-generate_requirements()
-
-with open('filename.txt', 'r') as f:
-    content = f.read()
-
-print(content)
-import os
-
-# List all files and directories in the current directory
-directory = os.getcwd()  # Get current working directory
-files = os.listdir(directory)
-
-print("Files and directories in '", directory, "' :")
-print(files)
 
 
 
-np.set_printoptions(threshold=sys.maxsize)
+
 def smooth(df, col):
     y_old=df[col]
     x_old=np.linspace(0,1,len(y_old))
@@ -108,7 +72,7 @@ def step_back(df):
     #df_out=df_out.drop(columns=cols_poly)
     #df_out = poly.fit_transform(df_out)
     #print(df_out)
-    df_out.to_csv('tmp.csv')
+    #df_out.to_csv('tmp.csv')
     return(df_out)
     
 def devide_df(df,n):
@@ -116,7 +80,7 @@ def devide_df(df,n):
     dfs=[]
     indx=0
     for i in range(n):
-        df_small=df.iloc[indx:indx+round(size,0)]
+        df_small=df[indx:indx+round(size,0)]
         dfs.append(df_small)
         indx=indx+size+1
     return(dfs)
@@ -126,12 +90,22 @@ def devide_df(df,n):
 #       client = mlflow.MlflowClient(tracking_uri="http://127.0.0.1:5000")
 mlflow.set_tracking_uri("http://127.0.0.1:5000")
 #os.remove('C:\\SVN\\Python projects\\Regression v1.0\\files\\')
-workfiles_path='./files/'
-import_path='./files_csv/'
+main_path='C:/SVN/Python projects/Regression v1.0'
+if os.path.exists(main_path):
+    main_path=main_path
+else:
+    main_path='C:/Python projects/Regression v1.0'
+if not os.path.exists(main_path):
+          os.makedirs(main_path)
+ 
+workfiles_path=main_path+'/files/'
+import_path=main_path+'/files_csv/'
 if not os.path.exists(workfiles_path):
           os.makedirs(workfiles_path) 
 if not os.path.exists(import_path):
           shutil.copytree('C:/SVN/Python projects/files_csv',import_path) 
+
+
 
 learn_db_name='100k_1.csv' #df learn 4000 #100k_1
 test_db_name='test5.csv'
@@ -166,17 +140,26 @@ df=step_back(df)
 #df_test_import=df_test_import[df.columns]
 df_cor=df.corr()
 dfs=devide_df(df,4)
-df1=df[:54000]
-df2=df[54001:108000]
-
-
+df_concat=pd.DataFrame()
 poly = PolynomialFeatures(degree=2, include_bias=False)
+for ds in dfs:
+    df_poly=poly.fit_transform(ds)
+    feature_names_train = poly.get_feature_names_out(ds.columns)
+    df_concat=pd.concat([df_concat,df_poly],axis=0)
 
-df1_poly=poly.fit_transform(df1)
+    
+    
+    
+    
+
+
+
+
+
 df2_poly=poly.fit_transform(df2)
 
 
-feature_names_train = poly.get_feature_names_out(df1.columns)
+
 feature_names_2train = poly.get_feature_names_out(df2.columns)
 
 #df_train.to_csv('dfx0.csv')
