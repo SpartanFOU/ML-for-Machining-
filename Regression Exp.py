@@ -142,10 +142,11 @@ df_cor=df.corr()
 dfs=devide_df(df,4)
 df_concat=pd.DataFrame()
 poly = PolynomialFeatures(degree=2, include_bias=False)
-for ds in dfs:
-    df_poly=poly.fit_transform(ds)
-    feature_names_train = poly.get_feature_names_out(ds.columns)
-    df_concat=pd.concat([df_concat,df_poly],axis=0)
+
+df_poly=poly.fit_transform(dfs[1])
+feature_names = poly.get_feature_names_out(dfs[1].columns)
+df_trans=pd.DataFrame(df_poly, columns=feature_names)
+df_corr=df_trans.corr()
 
     
     
