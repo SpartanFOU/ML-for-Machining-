@@ -15,6 +15,40 @@ from tkinter import *
 from tkinter import messagebox
 import shutil 
 
+
+import subprocess
+
+def generate_requirements():
+    # Run 'pip freeze' command and capture the output
+    result = subprocess.run(['pip', 'freeze'], stdout=subprocess.PIPE, text=True)
+    
+    # Store the result (list of installed packages and versions)
+    requirements = result.stdout
+    
+    # Write the output to requirements.txt
+    with open('requirements.txt', 'w') as f:
+        f.write(requirements)
+
+    print("requirements.txt has been generated.")
+
+# Call the function to generate the requirements.txt file
+generate_requirements()
+
+with open('filename.txt', 'r') as f:
+    content = f.read()
+
+print(content)
+import os
+
+# List all files and directories in the current directory
+directory = os.getcwd()  # Get current working directory
+files = os.listdir(directory)
+
+print("Files and directories in '", directory, "' :")
+print(files)
+
+
+
 np.set_printoptions(threshold=sys.maxsize)
 def smooth(df, col):
     y_old=df[col]
