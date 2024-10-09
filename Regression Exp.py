@@ -214,8 +214,8 @@ print(df_test.columns)
 df_train=pd.concat([df_train,df_train_cat],axis=1)    
 df_test=pd.concat([df_test,df_test_cat],axis=1)
 
-df_train=pd.concat([df_train,df_y_train],axis=1)    
-df_test=pd.concat([df_test,df_y_test],axis=1)
+#df_train=pd.concat([df_train,df_y_train],axis=1)    
+#df_test=pd.concat([df_test,df_y_test],axis=1)
 
 df_train=df_train.drop(0)
 df_test=df_test.drop(0)
